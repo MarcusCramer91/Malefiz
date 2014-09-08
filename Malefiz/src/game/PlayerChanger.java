@@ -21,11 +21,11 @@ public class PlayerChanger {
 		this.board = board;
 		this.structure = structure;
 		activePlayer = 4;
-		activePlayers = board.getActivePlayers();
 		tokenManager = new TokenManager(structure);
 	}
 	
 	public void changePlayer() {
+		activePlayers = board.getActivePlayers();
 		deactivatePlayer(activePlayer);
 		activePlayer++;
 		if (activePlayer > 4) activePlayer = 1;
@@ -34,6 +34,7 @@ public class PlayerChanger {
 			return;
 		}
 		activatePlayer(activePlayer);
+		board.activateDice();
 		board.repaint();
 	}
 	

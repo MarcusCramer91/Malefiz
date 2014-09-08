@@ -12,6 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -46,6 +47,24 @@ public class Board {
 	public static final int TOKENHEIGHT = 51;
 	public static final int TOKENWIDTH = 39;
 	
+	// phases of the game
+	// Can tokens be selected for moving at this point?
+	private boolean isTokenSelectionPhase;
+	
+	// Can tokens be moved at this point?
+	private boolean isMoveSelectionPhase;
+	
+	
+	private PlayerChanger playerChanger;
+	
+	// Moves currently possible
+	private ArrayList<Node> possibleMoves;
+	
+	// Token currently selected
+	private Node selectedNode;
+	// result of the current dice roll
+	private int diceNumber;
+	
 	// displays the currently active player
 	private JLabel activePlayer2;
 
@@ -62,6 +81,11 @@ public class Board {
 	
 	public Board() {
 
+		// initialize phases
+		isTokenSelectionPhase = false;
+		isMoveSelectionPhase = false;
+
+		
 		redTokens = new ArrayList<JLabel>();
 		greenTokens = new ArrayList<JLabel>();
 		yellowTokens = new ArrayList<JLabel>();
@@ -82,10 +106,14 @@ public class Board {
 		boardPane.setPreferredSize(new Dimension(900,900));
 		boardPane.setLayout(null);
 		boardPane.add(boardLabel,JLayeredPane.DEFAULT_LAYER);
+		boardPane.addMouseListener(new BoardListener(this,playerChanger));
 
 		// Initialize board structure
 		structure = new BoardStructure(this);
 		structure.initializeStructure();
+		
+		// Initialize player changer
+		playerChanger = new PlayerChanger(this,structure);
 				
 		// Info area
 		JPanel gameInfo = new JPanel();
@@ -244,7 +272,7 @@ public class Board {
 		playerTwoSelection.setEnabled(false);
 		playerThreeSelection.setEnabled(false);
 		playerFourSelection.setEnabled(false);
-		PlayerChanger playerChanger = new PlayerChanger(this,structure);
+		playerChanger = new PlayerChanger(this,structure);
 		playerChanger.changePlayer();
 	}
 	
@@ -259,21 +287,20 @@ public class Board {
 		diceResult.setText("");
 		activePlayer2.setText("");
 		setActivePlayers(null);
-		structure.resetRed();
-		structure.resetGreen();
-		structure.resetYellow();
-		structure.resetBlue();
+		structure.resetField();
 		
 		// Reset player bases
 		boardPane.validate();
 		boardPane.repaint();
 	}
 	
-	public int roll() {
+	public void roll() {
 		Random random = new Random();
 		int result = (int) Math.ceil(random.nextInt(6))+1;
 		diceResult.setText("You rolled: " + result);
-		return result;
+		deactivateDice();
+		isTokenSelectionPhase = true;
+		diceNumber = result;
 	}
 	
 	public void repaint() {
@@ -306,5 +333,53 @@ public class Board {
 			activePlayer2.setText("Player four");
 			activePlayer2.setForeground(Color.BLUE);
 		}
+	}
+	
+	public boolean isTokenSelectionPhase() {
+		return isTokenSelectionPhase;
+	}
+	
+	public boolean isMoveSelectionPhase() {
+		return isMoveSelectionPhase;
+	}
+	
+	public void endMoveSelectionPhase() {
+		isMoveSelectionPhase = false;
+		for (Node node : possibleMoves) {
+			node.undoSelectable();
+		}
+	}
+	
+	public void beginMoveSelectionPhase() {
+		isMoveSelectionPhase = true;
+	}
+	
+	public void endTokenSelectionPhase() {
+		isTokenSelectionPhase = false;
+	}
+	
+	public void activateDice() {
+		diceButton.setEnabled(true);
+	}
+	
+	public void deactivateDice() {
+		diceButton.setEnabled(false);
+	}
+	
+	public void showMoves(Point point) {
+		selectedNode = structure.getClickedNode(point.x, point.y);
+		if (selectedNode == null) return;
+		possibleMoves = structure.getPossibleSteps(diceNumber, selectedNode);
+		for (Node node : possibleMoves) {
+			node.setSelectable();
+		}
+	}
+	
+	public void moveToken(Point point) {
+		structure.moveToken(point,possibleMoves,selectedNode);
+	}
+	
+	public void nextPlayer() {
+		playerChanger.changePlayer();
 	}
 }

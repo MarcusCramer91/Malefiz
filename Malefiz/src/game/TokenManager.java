@@ -41,18 +41,22 @@ public class TokenManager {
 	}
 	
 	public ArrayList<Node> getRedNodes() {
+		getNodes();
 		return nodesRed;
 	}
 	
 	public ArrayList<Node> getGreenNodes() {
+		getNodes();
 		return nodesGreen;
 	}
 	
 	public ArrayList<Node> getYellowNodes() {
+		getNodes();
 		return nodesYellow;
 	}
 	
 	public ArrayList<Node> getBlueNodes() {
+		getNodes();
 		return nodesBlue;
 	}
 }
