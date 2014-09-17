@@ -155,12 +155,24 @@ public class BoardStructure {
 		}
 	}
 	
-	public void moveToken(Point point, ArrayList<Node> possibleMoves, Node selectedNode) {
-		Node selectedMove = getClickedNode(point.x,point.y);
+	/**
+	 * 
+	 * @param point destination point the user clicked on, returned by BoardListener
+	 * @param possibleMoves possible moves one token can take
+	 * @param selectedNode token node previously selected by user
+	 * @return false if no move could be done, true if token was successfully moved
+	 */
+	public boolean moveToken(Node selectedMove, ArrayList<Node> possibleMoves, Node selectedNode) {
 		if (possibleMoves.contains(selectedMove)) {
+			if (selectedMove.getPlayer() != 0) {
+				returnTokenToBase(selectedMove.getPlayer());
+				selectedMove.removePlayer();
+			}
 			selectedMove.addPlayer(selectedNode.getPlayer());
 			selectedNode.removePlayer();
+			return true;
 		}
+		return false;
 	}
 	
 	public Node getClickedNode(int x, int y) {
@@ -175,6 +187,51 @@ public class BoardStructure {
 		return null;
 	}
 	
+	public void returnTokenToBase(int player) {
+		Node emptyNode = null;
+		int counter = 0;
+		if (player == 1) {
+			ArrayList<Node> redBase = getRedBase();
+			while (emptyNode == null) {
+				if (redBase.get(counter).getPlayer() == 0) emptyNode = redBase.get(counter);
+			}
+			emptyNode.addPlayer(1);
+		}
+		else if (player == 2) {
+			ArrayList<Node> greenBase = getGreenBase();
+			while (emptyNode == null) {
+				if (greenBase.get(counter).getPlayer() == 0) emptyNode = greenBase.get(counter);
+			}
+			emptyNode.addPlayer(2);
+			
+		}
+		else if (player == 3) {
+			ArrayList<Node> yellowBase = getYellowBase();
+			while (emptyNode == null) {
+				if (yellowBase.get(counter).getPlayer() == 0) emptyNode = yellowBase.get(counter);
+			}
+			emptyNode.addPlayer(3);
+			
+		}
+		else {
+			ArrayList<Node> blueBase = getBlueBase();
+			while (emptyNode == null) {
+				if (blueBase.get(counter).getPlayer() == 0) emptyNode = blueBase.get(counter);
+			}
+			emptyNode.addPlayer(4);		
+		}
+	}
+	
+	public ArrayList<Node> showStoneMoves() {
+		ArrayList<Node> possibleStoneMoves = new ArrayList<Node>();
+		for (Node node : allNodes) {
+			if (node.getPlayer() == 0 && node.isBlockable() && !node.isBlocked()) {
+				node.setSelectable();
+				possibleStoneMoves.add(node);
+			}
+		}
+		return possibleStoneMoves;
+	}
 
 	private void initBoard() {
 		
@@ -439,7 +496,7 @@ public class BoardStructure {
 		allNodes.add(node1316);	
 		
 		// fourteenth row
-		Node node1400 = new Node(433,15,1400,true);
+		Node node1400 = new Node(433,15,1400,false);
 		allNodes.add(node1400);
 		
 		// init red base
@@ -642,6 +699,7 @@ public class BoardStructure {
 		
 		node502.addNeighbour(node501);
 		node502.addNeighbour(node503);
+		node502.addNeighbour(node600);
 		
 		node503.addNeighbour(node502);
 		node503.addNeighbour(node504);
@@ -668,6 +726,7 @@ public class BoardStructure {
 		
 		node510.addNeighbour(node509);
 		node510.addNeighbour(node511);
+		node510.addNeighbour(node601);
 
 		node511.addNeighbour(node510);
 		node511.addNeighbour(node512);
@@ -691,6 +750,7 @@ public class BoardStructure {
 		
 		node702.addNeighbour(node701);
 		node702.addNeighbour(node703);
+		node702.addNeighbour(node800);
 
 		node703.addNeighbour(node702);
 		node703.addNeighbour(node704);
@@ -703,11 +763,12 @@ public class BoardStructure {
 		
 		node706.addNeighbour(node705);
 		node706.addNeighbour(node707);
+		node706.addNeighbour(node801);
 		
 		node707.addNeighbour(node706);
 		node707.addNeighbour(node708);
 		
-		node708.addNeighbour(node706);
+		node708.addNeighbour(node707);
 		node708.addNeighbour(node601);
 		
 		// add neighbours for the eighth row

@@ -20,17 +20,30 @@ public class BoardListener implements MouseListener {
 		this.playerChanger = playerChanger;
 	}
 	public void mouseClicked(MouseEvent event) {
-		if (board.isTokenSelectionPhase()) {
-			board.showMoves(event.getLocationOnScreen());
-			board.endTokenSelectionPhase();
-			board.beginMoveSelectionPhase();
+		// left mouse click triggers selection
+		if (event.getButton() == MouseEvent.BUTTON1) {
+			if (board.isTokenSelectionPhase()) {
+				if (board.showMoves(event.getLocationOnScreen())) {
+					board.endTokenSelectionPhase();
+				}
+			}
+			else if (board.isMoveSelectionPhase()) {
+				if (board.moveToken(event.getLocationOnScreen())) {
+					board.endMoveSelectionPhase();
+				}
+			}
+			else if (board.isStoneMovingPhase()) {
+				if (board.moveStone(event.getLocationOnScreen())) {
+					board.endStoneMovingPhase();
+				}			
+			}	
 		}
-		else if (board.isMoveSelectionPhase()) {
-			board.endMoveSelectionPhase();
-			board.moveToken(event.getLocationOnScreen());
-			board.nextPlayer();
+		// right mouse click triggers deselection
+		else if (event.getButton() == MouseEvent.BUTTON3) {
+			if (board.isMoveSelectionPhase()) {
+				board.unselectToken();
+			}
 		}
-		
 	}
 
 	public void mouseEntered(MouseEvent event) {

@@ -54,6 +54,9 @@ public class Board {
 	// Can tokens be moved at this point?
 	private boolean isMoveSelectionPhase;
 	
+	// Can stones be moved at this point
+	private boolean isStoneMovingPhase;
+	
 	
 	private PlayerChanger playerChanger;
 	
@@ -63,7 +66,7 @@ public class Board {
 	// Token currently selected
 	private Node selectedNode;
 	// result of the current dice roll
-	private int diceNumber;
+	private int diceNumber = 1;
 	
 	// displays the currently active player
 	private JLabel activePlayer2;
@@ -79,11 +82,18 @@ public class Board {
 	
 	private BoardStructure structure;
 	
+	// Node currently selected
+	private Node currentNode;
+	
+	// Nodes that can be selected for stone moving
+	private ArrayList<Node> possibleStoneMoves;
+	
 	public Board() {
 
 		// initialize phases
 		isTokenSelectionPhase = false;
 		isMoveSelectionPhase = false;
+		isStoneMovingPhase = false;
 
 		
 		redTokens = new ArrayList<JLabel>();
@@ -288,19 +298,17 @@ public class Board {
 		activePlayer2.setText("");
 		setActivePlayers(null);
 		structure.resetField();
-		
-		// Reset player bases
 		boardPane.validate();
 		boardPane.repaint();
 	}
 	
 	public void roll() {
 		Random random = new Random();
-		int result = (int) Math.ceil(random.nextInt(6))+1;
-		diceResult.setText("You rolled: " + result);
+	 	diceNumber = (int) Math.ceil(random.nextInt(6))+1;
+		diceResult.setText("You rolled: " + diceNumber);
 		deactivateDice();
 		isTokenSelectionPhase = true;
-		diceNumber = result;
+		
 	}
 	
 	public void repaint() {
@@ -343,6 +351,10 @@ public class Board {
 		return isMoveSelectionPhase;
 	}
 	
+	public boolean isStoneMovingPhase() {
+		return isStoneMovingPhase;
+	}
+	
 	public void endMoveSelectionPhase() {
 		isMoveSelectionPhase = false;
 		for (Node node : possibleMoves) {
@@ -350,12 +362,45 @@ public class Board {
 		}
 	}
 	
-	public void beginMoveSelectionPhase() {
+	private void beginMoveSelectionPhase() {
 		isMoveSelectionPhase = true;
+	}
+	
+	private void beginStoneMovingPhase() {
+		isStoneMovingPhase = true;
+		possibleStoneMoves = structure.showStoneMoves();
+	}
+	
+	public void unselectToken() {
+		isTokenSelectionPhase = true;
+		endMoveSelectionPhase();	
+	}
+	
+	/**
+	 * 
+	 * @param point destination node selected by user
+	 * @return false if stone could not be moved, true if stone was successfully moved
+	 */
+	public boolean moveStone(Point point) {
+		currentNode = structure.getClickedNode(point.x,point.y);
+		if (possibleStoneMoves.contains(currentNode)) {
+			currentNode.block();
+			return true;
+		}
+		return false;
+	}
+	
+	public void endStoneMovingPhase() {
+		isStoneMovingPhase = false;
+		for (Node node : possibleStoneMoves) {
+			node.undoSelectable();
+		}
+		playerChanger.changePlayer();
 	}
 	
 	public void endTokenSelectionPhase() {
 		isTokenSelectionPhase = false;
+		beginMoveSelectionPhase();
 	}
 	
 	public void activateDice() {
@@ -366,20 +411,46 @@ public class Board {
 		diceButton.setEnabled(false);
 	}
 	
-	public void showMoves(Point point) {
+	/**
+	 * 
+	 * @param point token node selected by user
+	 * @return false if no valid token was selected, true if a valid token was selected
+	 */
+	public boolean showMoves(Point point) {
 		selectedNode = structure.getClickedNode(point.x, point.y);
-		if (selectedNode == null) return;
+		if (selectedNode == null) return false;
+		else if (selectedNode.getPlayer() != playerChanger.getActivePlayer()) return false;
 		possibleMoves = structure.getPossibleSteps(diceNumber, selectedNode);
 		for (Node node : possibleMoves) {
 			node.setSelectable();
 		}
+		return true;
 	}
 	
-	public void moveToken(Point point) {
-		structure.moveToken(point,possibleMoves,selectedNode);
+	/**
+	 * 
+	 * @param point destination point clicked on by the user
+	 * @return false if no move could be done, true if token was successfully moved
+	 */
+	public boolean moveToken(Point point) {
+		currentNode = structure.getClickedNode(point.x, point.y);
+		if (currentNode == null) return false;
+		if (structure.moveToken(currentNode,possibleMoves,selectedNode)) {
+			if (currentNode.isBlocked()) {
+				currentNode.unblock();
+				beginStoneMovingPhase();
+			}
+			else playerChanger.changePlayer();
+			return true;
+		}
+		return false;
 	}
 	
 	public void nextPlayer() {
 		playerChanger.changePlayer();
+	}
+	
+	public int getDiceResult() {
+		return diceNumber;
 	}
 }

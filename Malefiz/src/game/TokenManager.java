@@ -23,8 +23,8 @@ public class TokenManager {
 	}
 
 	/**
-	 * Determines all nodes that currently inhabit a player token.
-	 * Saves the node in the list for the respective player tokens
+	 * Determines all nodes that currently have a player token.
+	 * Saves the nodes in the list for the respective player tokens
 	 */
 	public void getNodes() {
 		nodesRed.clear();
